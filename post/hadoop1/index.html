@@ -1,0 +1,123 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>使用docker搭建hadoop集群 - 自由志 - 致过去/未来</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="ifreer"><meta name=description content="制作基于ubuntu的Hadoop镜像 文中使用的到的docker知识及命令可参考 Docker基础 在开始之前需确保已安装好docker环境 安装"><meta name=generator content="Hugo 0.83.1 with theme even"><link rel=canonical href=https://zphilin.github.io/post/hadoop1/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link href=/sass/main.min.eda63b2e1aa5172399aa80bdbbe1fd2e79a57b25dd4e9160de91fe09d9233400.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="使用docker搭建hadoop集群"><meta property="og:description" content="制作基于ubuntu的Hadoop镜像 文中使用的到的docker知识及命令可参考 Docker基础 在开始之前需确保已安装好docker环境 安装"><meta property="og:type" content="article"><meta property="og:url" content="https://zphilin.github.io/post/hadoop1/"><meta property="article:section" content="post"><meta property="article:published_time" content="2016-11-19T01:37:56+08:00"><meta property="article:modified_time" content="2016-11-19T01:37:56+08:00"><meta itemprop=name content="使用docker搭建hadoop集群"><meta itemprop=description content="制作基于ubuntu的Hadoop镜像 文中使用的到的docker知识及命令可参考 Docker基础 在开始之前需确保已安装好docker环境 安装"><meta itemprop=datePublished content="2016-11-19T01:37:56+08:00"><meta itemprop=dateModified content="2016-11-19T01:37:56+08:00"><meta itemprop=wordCount content="1162"><meta itemprop=keywords content="hadoop,"><meta name=twitter:card content="summary"><meta name=twitter:title content="使用docker搭建hadoop集群"><meta name=twitter:description content="制作基于ubuntu的Hadoop镜像 文中使用的到的docker知识及命令可参考 Docker基础 在开始之前需确保已安装好docker环境 安装"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script><script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Zphilin</a></div><div class=mobile-navbar-icon><span></span><span></span><span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Zphilin</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>使用docker搭建hadoop集群</h1><div class=post-meta><span class=post-time>2016-11-19</span><div class=post-category><a href=/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/>大数据</a></div></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class="post-toc-content always-active"><nav id=TableOfContents><ul><li><a href=#制作基于ubuntu的hadoop镜像>制作基于ubuntu的Hadoop镜像</a></li><li><a href=#安装java>安装JAVA</a></li><li><a href=#安装hadoop>安装Hadoop</a></li><li><a href=#配置hadoop>配置Hadoop</a></li><li><a href=#配置节点认证互信>配置节点认证互信</a></li><li><a href=#hadoop集群实施>Hadoop集群实施</a></li><li><a href=#新建hadoop节点>新建hadoop节点</a></li><li><a href=#配置hosts>配置Hosts</a></li><li><a href=#master节点设置>Master节点设置</a></li><li><a href=#启动服务>启动服务</a></li><li><a href=#查看服务状态>查看服务状态</a></li></ul></nav></div></div><div class=post-content><h1 id=制作基于ubuntu的hadoop镜像>制作基于ubuntu的Hadoop镜像</h1><blockquote><p>文中使用的到的docker知识及命令可参考 Docker基础</p><p>在开始之前需确保已安装好docker环境</p></blockquote><h1 id=安装java>安装JAVA</h1><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>#由于hadoop运行需要java环境，在宿主机新建一个容器用于配置java及安装hadoop
+docker run -it ubuntu
+apt-get install software-properties-common python-software-properties 
+add-apt-repository ppa:webupd8team/java
+apt-get update 
+apt-get install oracle-java7-installer 
+java -version
+</code></pre></td></tr></table></div></div><h1 id=安装hadoop>安装Hadoop</h1><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>cd ~
+mkdir soft
+cd soft
+mkdir hadoop
+wget http://mirrors.sonic.net/apache/hadoop/common/hadoop-2.6.5/hadoop-2.6.5.tar.gz
+tar -zxvf hadoop-2.6.5.tar.gz
+
+vim ~/.bashrc
+export JAVA_HOME=/usr/lib/jvm/java-7-oracle 
+export HADOOP_HOME=/root/soft/hadoop/hadoop-2.6.5 
+export HADOOP_CONFIG_HOME=$HADOOP_HOME/etc/hadoop 
+export PATH=$PATH:$HADOOP_HOME/bin 
+export PATH=$PATH:$HADOOP_HOME/sbin
+
+vim hadoop-env.sh
+export JAVA_HOME=/usr/lib/jvm/java-7-oracle
+</code></pre></td></tr></table></div></div><h1 id=配置hadoop>配置Hadoop</h1><p>分别配置 <strong>core-site.xml</strong>、<strong>hdfs-site.xml</strong>、<strong>mapred-site.xml三个文件</strong></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>cd $HADOOP_CONFIG_HOME
+mkdir tmp
+mkdir namenode
+mkdir datanode
+#创建各节点的存放目录用于配置
+</code></pre></td></tr></table></div></div><p><strong>vim core-site.xml 配置configuration中的property 如下</strong></p><blockquote><p>&lt;configuration></p><p>&lt;property></p><p>&lt;name>hadoop.tmp.dir&lt;/name></p><p>&lt;value>/root/soft/hadoop/hadoop-2.6.5/tmp&lt;/value></p><p>&lt;description>A base for other temporary directories.&lt;/description></p><p>&lt;/property></p><p>&lt;property></p><p>&lt;name>fs.default.name&lt;/name></p><p>&lt;value>hdfs://master:9000&lt;/value></p><p>&lt;final>true&lt;/final></p><p>&lt;description>The name of the default file system. A URI whose scheme and authority determine the FileSystem implementation. The uri&rsquo;s scheme determines the config property (fs.SCHEME.impl) naming the FileSystem implementation class. The uri&rsquo;s authority is used to determine the host, port, etc. for a filesystem.</p><p>&lt;/description></p><p>&lt;/property></p><p>&lt;/configuration></p></blockquote><p><strong>vim hdfs.site.xml</strong></p><blockquote><p>&lt;configuration></p><p>&lt;property></p><p>&lt;name>dfs.replication&lt;/name></p><p>&lt;value>2&lt;/value></p><p>&lt;final>true&lt;/final></p><p>&lt;description>Default block replication.</p><p>The actual number of replications can be specified when the file is created.</p><p>The default is used if replication is not specified in create time.</p><p>&lt;/description></p><p>&lt;/property></p><p>&lt;property></p><p>&lt;name>dfs.namenode.name.dir&lt;/name></p><p>&lt;value>/root/soft/hadoop/hadoop-2.6.5/namenode&lt;/value></p><p>&lt;final>true&lt;/final></p><p>&lt;/property></p><p>&lt;property></p><p>&lt;name>dfs.datanode.data.dir&lt;/name></p><p>&lt;value>/root/soft/hadoop/hadoop-2.6.5/datanode&lt;/value></p><p>&lt;final>true&lt;/final></p><p>&lt;/property></p><p>&lt;/configuration></p></blockquote><p><strong>cp mapred-site.xml.template mapred-site.xml</strong></p><p><strong>vim mapred-site.xml</strong></p><blockquote><p>&lt;configuration></p><p>&lt;property></p><p>&lt;name>mapred.job.tracker&lt;/name></p><p>&lt;value>master:9001&lt;/value></p><p>&lt;description>The host and port that the MapReduce job tracker runs</p><p>at. If &ldquo;local&rdquo;, then jobs are run in-process as a single map</p><p>and reduce task.</p><p>&lt;/description></p><p>&lt;/property></p><p>&lt;/configuration></p></blockquote><h1 id=配置节点认证互信>配置节点认证互信</h1><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>#设置服务自启动
+vim ~/.bashrc
+/usr/sbin/sshd
+
+ssh-keygen -t rsa -P &#39;&#39; -f ~/.ssh/id_rsa 
+cd ~/.ssh
+cat id_dsa.pub &gt;&gt; authorized_keys
+#实验中，各节点可使用同一个公钥；也可后续生成不同的公钥，将各节点自己的公钥加入到其他节点的authorized_keys中
+#注意authorized_keys文件非owner用户不能有w权限
+
+exit 
+docker commit -m &#39;hadoop installed&#39; container_id ubuntu:hadoop
+#提交保持hadoop镜像用于后续新建实例
+</code></pre></td></tr></table></div></div><h1 id=hadoop集群实施>Hadoop集群实施</h1><p>基于之前的hadoop的镜像，此时只需new（docker run）多个容器即可创建多个hadoop节点，然后修改其中的配置，配置为Master或Slave</p><h1 id=新建hadoop节点>新建hadoop节点</h1><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>#在三个不同的终端标签页中分别执行以下命令
+docker run -it -h master -p 50070:50070 ubuntu:hadoop
+docker run -it -h slave1 ubuntu:hadoop
+docker run -it -h slave2 ubuntu:hadoop
+</code></pre></td></tr></table></div></div><h1 id=配置hosts>配置Hosts</h1><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>#在各节点容器中执行ifconfig命令，得到具体ip，然后向各节点hosts都写入
+vim /etc/hosts
+172.17.0.4 master
+172.17.0.5 slave1
+172.17.0.6 slave2
+</code></pre></td></tr></table></div></div><h1 id=master节点设置>Master节点设置</h1><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>cd $HADOOP_CONFIG_HOME
+vim slaves #写入所有slave节点的主机名hostname
+slave1
+slave2
+</code></pre></td></tr></table></div></div><h1 id=启动服务>启动服务</h1><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash><span class=c1>#在master节点执行start-all.sh 若能看到以下类似信息表示成功</span>
+slave1: starting nodemanager, logging to /root/soft/hadoop/hadoop-2.6.5/logs/yarn-root-nodemanager-slave1.out
+</code></pre></td></tr></table></div></div><h1 id=查看服务状态>查看服务状态</h1><blockquote><p>#在各节点中执行jps命令查看服务进程</p><p>jps #master中信息</p><p>1762 NodeManager</p><p>3592 Jps</p><p>974 NameNode</p><p>1563 SecondaryNameNode</p><p>336 ResourceManager</p><p>1418 DataNode</p></blockquote><p>对于非Toolbox的Docker环境可直接在浏览器中访问master节点 <a href=http://172.17.0.4:50070>http://172.17.0.4:50070</a></p><p>如果是采用Toolbox安装的Docker，则访问<a href=http://192.168.99.100:50070>http://192.168.99.100:50070</a></p><p>此中情况需要做端口映射，见开始docker run处，如果没有可在宿主机执行，达到动态修改端口～</p><p>iptables -t nat -A PREROUTING -p tcp -m tcp &ndash;dport 50070 -j DNAT &ndash;to-destination 172.17.0.4:50070</p><p>![](/assets/屏幕快照 2016-11-19 下午10.21.04.png)</p><p><em><a href=mailto:ifreer@2016.11.19>ifreer@2016.11.19</a></em></p></div><div class=post-copyright><p class=copyright-item><span class=item-title>Author</span>
+<span class=item-content>ifreer</span></p><p class=copyright-item><span class=item-title>LastMod</span>
+<span class=item-content>2016-11-19</span></p></div><footer class=post-footer><div class=post-tags><a href=/tags/hadoop/>hadoop</a></div><nav class=post-nav><a class=prev href=/post/yield/><i class="iconfont icon-left"></i>
+<span class="prev-text nav-default">yield生成器</span>
+<span class="prev-text nav-mobile">Prev</span></a></nav></footer></article></div></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:xworder@qq.com class="iconfont icon-email" title=email></a><a href=https://zphilin.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span>
+<span class=copyright-year>&copy;
+2017 -
+2021<span class=heart><i class="iconfont icon-heart"></i></span><span>zphilin</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script><script type=text/javascript src=/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js></script></body></html>

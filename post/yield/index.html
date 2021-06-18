@@ -1,0 +1,416 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>yield生成器 - 自由志 - 致过去/未来</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="zphilin"><meta name=description content="yield is a Generator class is implementing Iterator yield 是一个实现了迭代器的生成器，生成器多了一个send()方法，此方法和next() 类似也是恢复执行，但能从外部向生成器传入一"><meta name=generator content="Hugo 0.83.1 with theme even"><link rel=canonical href=https://zphilin.github.io/post/yield/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link href=/sass/main.min.eda63b2e1aa5172399aa80bdbbe1fd2e79a57b25dd4e9160de91fe09d9233400.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="yield生成器"><meta property="og:description" content="yield is a Generator class is implementing Iterator yield 是一个实现了迭代器的生成器，生成器多了一个send()方法，此方法和next() 类似也是恢复执行，但能从外部向生成器传入一"><meta property="og:type" content="article"><meta property="og:url" content="https://zphilin.github.io/post/yield/"><meta property="article:section" content="post"><meta property="article:published_time" content="2017-06-30T01:37:56+08:00"><meta property="article:modified_time" content="2017-06-30T01:37:56+08:00"><meta itemprop=name content="yield生成器"><meta itemprop=description content="yield is a Generator class is implementing Iterator yield 是一个实现了迭代器的生成器，生成器多了一个send()方法，此方法和next() 类似也是恢复执行，但能从外部向生成器传入一"><meta itemprop=datePublished content="2017-06-30T01:37:56+08:00"><meta itemprop=dateModified content="2017-06-30T01:37:56+08:00"><meta itemprop=wordCount content="1760"><meta itemprop=keywords content="PHP,协程,"><meta name=twitter:card content="summary"><meta name=twitter:title content="yield生成器"><meta name=twitter:description content="yield is a Generator class is implementing Iterator yield 是一个实现了迭代器的生成器，生成器多了一个send()方法，此方法和next() 类似也是恢复执行，但能从外部向生成器传入一"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script><script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Zphilin</a></div><div class=mobile-navbar-icon><span></span><span></span><span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Zphilin</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>yield生成器</h1><div class=post-meta><span class=post-time>2017-06-30</span><div class=post-category><a href=/categories/%E5%90%8E%E5%8F%B0/>后台</a></div></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class="post-toc-content always-active"><nav id=TableOfContents><ul><li><a href=#程序执行流程>程序执行流程</a></li><li><a href=#foreach-自动迭代>foreach 自动迭代</a></li><li><a href=#协程>协程</a></li></ul></nav></div></div><div class=post-content><blockquote><p>yield is a Generator class is implementing Iterator</p></blockquote><p>yield 是一个实现了迭代器的<code>生成器</code>，生成器多了一个send()方法，此方法和next() 类似也是恢复执行，但能从外部向生成器传入一个值，恢复执行直到下一个 yield。</p><h1 id=程序执行流程>程序执行流程</h1><p>当一个函数中出现了yield关键字时，此时这个函数就变成了一个 <code>生成器</code>
+需要调用next或send迭代方法使其执行，且碰到yield就会中断让出执行权，并返回一个yield后的值，直到再次迭代到。</p><p>send方法传入的值将会被作为生成器当前所在的 <a href=http://php.net/manual/zh/language.generators.syntax.php#control-structures.yield>yield</a> 的返回值；并自动恢复执行到下一个yield。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-php data-lang=php><span class=o>&lt;?</span><span class=nx>php</span>
+ <span class=k>function</span> <span class=nf>gen</span><span class=p>()</span> <span class=p>{</span>
+     <span class=nv>$ret</span> <span class=o>=</span> <span class=p>(</span><span class=k>yield</span> <span class=mi>1</span><span class=p>);</span>
+     <span class=nx>var_dump</span><span class=p>(</span><span class=nv>$ret</span><span class=p>);</span>
+     <span class=nv>$ret</span> <span class=o>=</span> <span class=p>(</span><span class=k>yield</span> <span class=mi>2</span><span class=p>);</span>
+     <span class=nx>var_dump</span><span class=p>(</span><span class=nv>$ret</span><span class=p>);</span>
+ <span class=p>}</span>
+ 
+ <span class=nv>$gen</span> <span class=o>=</span> <span class=nx>gen</span><span class=p>();</span>
+ <span class=k>echo</span> <span class=nx>PHP_EOL</span><span class=p>;</span>
+ <span class=nx>var_dump</span><span class=p>(</span><span class=nv>$gen</span><span class=o>-&gt;</span><span class=na>current</span><span class=p>());</span>    <span class=c1>// int(1)
+</span><span class=c1></span> <span class=k>echo</span> <span class=nx>PHP_EOL</span><span class=p>;</span>
+ <span class=nx>var_dump</span><span class=p>(</span><span class=nv>$gen</span><span class=o>-&gt;</span><span class=na>send</span><span class=p>(</span><span class=s1>&#39;senda&#39;</span><span class=p>));</span> 
+ <span class=c1>//   string(5) &#34;senda&#34; 生成器中第一个dump的输出
+</span><span class=c1></span> <span class=c1>//   int(2) 执行结果的输出，自动恢复执行到第二个yield
+</span><span class=c1></span> <span class=k>echo</span> <span class=nx>PHP_EOL</span><span class=p>;</span>
+ <span class=nx>var_dump</span><span class=p>(</span><span class=nv>$gen</span><span class=o>-&gt;</span><span class=na>send</span><span class=p>(</span><span class=s1>&#39;sendb&#39;</span><span class=p>));</span><span class=o>-</span>
+ <span class=c1>//   string(5) &#34;sendb&#34;
+</span><span class=c1></span> <span class=c1>//   NULL 
+</span><span class=c1></span>
+</code></pre></td></tr></table></div></div><h1 id=foreach-自动迭代>foreach 自动迭代</h1><p>故所有生成器都可以用foreach来迭代，会自动调用迭代方法。</p><p>至于为什么叫生成器，可能就是因为在迭代的过程中能一直 <code>生成返回值</code> ，故每一次迭代总可以通过一定规则自动算出下一个值。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-php data-lang=php><span class=o>&lt;?</span><span class=nx>php</span>
+<span class=k>function</span> <span class=nf>xrange</span><span class=p>(</span><span class=nv>$start</span><span class=p>,</span> <span class=nv>$end</span><span class=p>,</span> <span class=nv>$step</span> <span class=o>=</span> <span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+    <span class=k>for</span> <span class=p>(</span><span class=nv>$i</span> <span class=o>=</span> <span class=nv>$start</span><span class=p>;</span> <span class=nv>$i</span> <span class=o>&lt;=</span> <span class=nv>$end</span><span class=p>;</span> <span class=nv>$i</span> <span class=o>+=</span> <span class=nv>$step</span><span class=p>)</span> <span class=p>{</span>
+        <span class=k>yield</span> <span class=nv>$i</span><span class=p>;</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+ 
+<span class=k>foreach</span> <span class=p>(</span><span class=nx>xrange</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=mi>1000000</span><span class=p>)</span> <span class=k>as</span> <span class=nv>$num</span><span class=p>)</span> <span class=p>{</span>
+    <span class=k>echo</span> <span class=nv>$num</span><span class=p>,</span> <span class=s2>&#34;</span><span class=se>\n</span><span class=s2>&#34;</span><span class=p>;</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><h1 id=协程>协程</h1><p>与进程对比，操作系统的进程调度，多个进程在一个 CPU 核心上执行，在系统调度下每一个进程执行一段指令就被暂停，切换到下一个进程，这样外部用户看起来就像是同时在执行多个任务。</p><p>协程可以理解为纯用户态的线程，通过协作而不是抢占来进行任务切换。相对于进程或者线程，协程所有的操作都可以在用户态而非操作系统内核态完成，创建和切换的消耗非常低。</p><p>操作系统在一个进程或线程发生IO时阻塞就会切换到另一个进程，而这里相当于程序自己发生阻塞时自己切换到其他任务，过一会再来，如此往返重复执行。</p><p>故需要我们把大任务拆分成多个小任务轮流执行，如果有某个小任务在等待系统 IO，就跳过它，执行下一个小任务，这样往复调度，实现了 IO 操作和 CPU 计算的并行执行，总体上就提升了任务的执行效率。</p><p>Go 协程意味着并行（或者可以以并行的方式部署，可以用 runtime.GOMAXPROCS() 指定可同时使用的 CPU 个数），协程一般来说只是并发。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span><span class=lnt>136
+</span><span class=lnt>137
+</span><span class=lnt>138
+</span><span class=lnt>139
+</span><span class=lnt>140
+</span><span class=lnt>141
+</span><span class=lnt>142
+</span><span class=lnt>143
+</span><span class=lnt>144
+</span><span class=lnt>145
+</span><span class=lnt>146
+</span><span class=lnt>147
+</span><span class=lnt>148
+</span><span class=lnt>149
+</span><span class=lnt>150
+</span><span class=lnt>151
+</span><span class=lnt>152
+</span><span class=lnt>153
+</span><span class=lnt>154
+</span><span class=lnt>155
+</span><span class=lnt>156
+</span><span class=lnt>157
+</span><span class=lnt>158
+</span><span class=lnt>159
+</span><span class=lnt>160
+</span><span class=lnt>161
+</span><span class=lnt>162
+</span><span class=lnt>163
+</span><span class=lnt>164
+</span><span class=lnt>165
+</span><span class=lnt>166
+</span><span class=lnt>167
+</span><span class=lnt>168
+</span><span class=lnt>169
+</span><span class=lnt>170
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-php data-lang=php><span class=o>&lt;?</span><span class=nx>php</span>
+<span class=k>class</span> <span class=nc>Task</span>
+<span class=p>{</span>
+    <span class=k>protected</span> <span class=nv>$taskId</span><span class=p>;</span>
+    <span class=k>protected</span> <span class=nv>$coroutine</span><span class=p>;</span>
+    <span class=k>protected</span> <span class=nv>$beforeFirstYield</span> <span class=o>=</span> <span class=k>true</span><span class=p>;</span>
+    <span class=k>protected</span> <span class=nv>$sendValue</span><span class=p>;</span>
+
+    <span class=sd>/**
+</span><span class=sd>     * Task constructor.
+</span><span class=sd>     * @param $taskId
+</span><span class=sd>     * @param Generator $coroutine
+</span><span class=sd>     */</span>
+    <span class=k>public</span> <span class=k>function</span> <span class=fm>__construct</span><span class=p>(</span><span class=nv>$taskId</span><span class=p>,</span> <span class=nx>Generator</span> <span class=nv>$coroutine</span><span class=p>)</span>
+    <span class=p>{</span>
+        <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>taskId</span> <span class=o>=</span> <span class=nv>$taskId</span><span class=p>;</span>
+        <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>coroutine</span> <span class=o>=</span> <span class=nv>$coroutine</span><span class=p>;</span>
+    <span class=p>}</span>
+
+    <span class=sd>/**
+</span><span class=sd>     * 获取当前的Task的ID
+</span><span class=sd>     * 
+</span><span class=sd>     * @return mixed
+</span><span class=sd>     */</span>
+    <span class=k>public</span> <span class=k>function</span> <span class=nf>getTaskId</span><span class=p>()</span>
+    <span class=p>{</span>
+        <span class=k>return</span> <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>taskId</span><span class=p>;</span>
+    <span class=p>}</span>
+
+    <span class=sd>/**
+</span><span class=sd>     * 判断Task执行完毕了没有
+</span><span class=sd>     * 
+</span><span class=sd>     * @return bool
+</span><span class=sd>     */</span>
+    <span class=k>public</span> <span class=k>function</span> <span class=nf>isFinished</span><span class=p>()</span>
+    <span class=p>{</span>
+        <span class=k>return</span> <span class=o>!</span><span class=nv>$this</span><span class=o>-&gt;</span><span class=na>coroutine</span><span class=o>-&gt;</span><span class=na>valid</span><span class=p>();</span>
+    <span class=p>}</span>
+
+    <span class=sd>/**
+</span><span class=sd>     * 设置下次要传给协程的值，比如 $id = (yield $xxxx)，这个值就给了$id了
+</span><span class=sd>     * 
+</span><span class=sd>     * @param $value
+</span><span class=sd>     */</span>
+    <span class=k>public</span> <span class=k>function</span> <span class=nf>setSendValue</span><span class=p>(</span><span class=nv>$value</span><span class=p>)</span>
+    <span class=p>{</span>
+        <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>sendValue</span> <span class=o>=</span> <span class=nv>$value</span><span class=p>;</span>
+    <span class=p>}</span>
+
+    <span class=sd>/**
+</span><span class=sd>     * 运行任务
+</span><span class=sd>     * 
+</span><span class=sd>     * @return mixed
+</span><span class=sd>     */</span>
+    <span class=k>public</span> <span class=k>function</span> <span class=nf>run</span><span class=p>()</span>
+    <span class=p>{</span>
+        <span class=c1>// 这里要注意，生成器的开始会reset，所以第一个值要用current获取
+</span><span class=c1></span>        <span class=k>if</span> <span class=p>(</span><span class=nv>$this</span><span class=o>-&gt;</span><span class=na>beforeFirstYield</span><span class=p>)</span> <span class=p>{</span>
+            <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>beforeFirstYield</span> <span class=o>=</span> <span class=k>false</span><span class=p>;</span>
+            <span class=k>return</span> <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>coroutine</span><span class=o>-&gt;</span><span class=na>current</span><span class=p>();</span>
+        <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+            <span class=c1>// 我们说过了，用send去调用一个生成器
+</span><span class=c1></span>            <span class=nv>$retval</span> <span class=o>=</span> <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>coroutine</span><span class=o>-&gt;</span><span class=na>send</span><span class=p>(</span><span class=nv>$this</span><span class=o>-&gt;</span><span class=na>sendValue</span><span class=p>);</span>
+            <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>sendValue</span> <span class=o>=</span> <span class=k>null</span><span class=p>;</span>
+            <span class=k>return</span> <span class=nv>$retval</span><span class=p>;</span>
+        <span class=p>}</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+
+
+<span class=k>Class</span> <span class=nc>Scheduler</span>
+<span class=p>{</span>
+    <span class=sd>/**
+</span><span class=sd>     * @var SplQueue
+</span><span class=sd>     */</span>
+    <span class=k>protected</span> <span class=nv>$taskQueue</span><span class=p>;</span>
+    <span class=sd>/**
+</span><span class=sd>     * @var int
+</span><span class=sd>     */</span>
+    <span class=k>protected</span> <span class=nv>$tid</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+
+    <span class=sd>/**
+</span><span class=sd>     * Scheduler constructor.
+</span><span class=sd>     */</span>
+    <span class=k>public</span> <span class=k>function</span> <span class=fm>__construct</span><span class=p>()</span>
+    <span class=p>{</span>
+        <span class=cm>/* 原理就是维护了一个队列，
+</span><span class=cm>         * 前面说过，从编程角度上看，协程的思想本质上就是控制流的主动让出（yield）和恢复（resume）机制
+</span><span class=cm>         * */</span>
+        <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>taskQueue</span> <span class=o>=</span> <span class=k>new</span> <span class=nx>SplQueue</span><span class=p>();</span>
+    <span class=p>}</span>
+
+    <span class=sd>/**
+</span><span class=sd>     * 增加一个任务
+</span><span class=sd>     *
+</span><span class=sd>     * @param Generator $task
+</span><span class=sd>     * @return int
+</span><span class=sd>     */</span>
+    <span class=k>public</span> <span class=k>function</span> <span class=nf>addTask</span><span class=p>(</span><span class=nx>Generator</span> <span class=nv>$task</span><span class=p>)</span>
+    <span class=p>{</span>
+        <span class=nv>$tid</span> <span class=o>=</span> <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>tid</span><span class=p>;</span>
+        <span class=nv>$task</span> <span class=o>=</span> <span class=k>new</span> <span class=nx>Task</span><span class=p>(</span><span class=nv>$tid</span><span class=p>,</span> <span class=nv>$task</span><span class=p>);</span>
+        <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>taskQueue</span><span class=o>-&gt;</span><span class=na>enqueue</span><span class=p>(</span><span class=nv>$task</span><span class=p>);</span>
+        <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>tid</span><span class=o>++</span><span class=p>;</span>
+        <span class=k>return</span> <span class=nv>$tid</span><span class=p>;</span>
+    <span class=p>}</span>
+
+    <span class=sd>/**
+</span><span class=sd>     * 把任务进入队列
+</span><span class=sd>     *
+</span><span class=sd>     * @param Task $task
+</span><span class=sd>     */</span>
+    <span class=k>public</span> <span class=k>function</span> <span class=nf>schedule</span><span class=p>(</span><span class=nx>Task</span> <span class=nv>$task</span><span class=p>)</span>
+    <span class=p>{</span>
+        <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>taskQueue</span><span class=o>-&gt;</span><span class=na>enqueue</span><span class=p>(</span><span class=nv>$task</span><span class=p>);</span>
+    <span class=p>}</span>
+
+    <span class=sd>/**
+</span><span class=sd>     * 运行调度器
+</span><span class=sd>     */</span>
+    <span class=k>public</span> <span class=k>function</span> <span class=nf>run</span><span class=p>()</span>
+    <span class=p>{</span>
+        <span class=k>while</span> <span class=p>(</span><span class=o>!</span><span class=nv>$this</span><span class=o>-&gt;</span><span class=na>taskQueue</span><span class=o>-&gt;</span><span class=na>isEmpty</span><span class=p>())</span> <span class=p>{</span>
+            <span class=c1>// 任务出队
+</span><span class=c1></span>            <span class=nv>$task</span> <span class=o>=</span> <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>taskQueue</span><span class=o>-&gt;</span><span class=na>dequeue</span><span class=p>();</span>
+            <span class=nv>$res</span> <span class=o>=</span> <span class=nv>$task</span><span class=o>-&gt;</span><span class=na>run</span><span class=p>();</span> <span class=c1>// 运行任务直到 yield
+</span><span class=c1></span>
+            <span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=nv>$task</span><span class=o>-&gt;</span><span class=na>isFinished</span><span class=p>())</span> <span class=p>{</span>
+                <span class=nv>$this</span><span class=o>-&gt;</span><span class=na>schedule</span><span class=p>(</span><span class=nv>$task</span><span class=p>);</span> <span class=c1>// 任务如果还没完全执行完毕，入队等下次执行
+</span><span class=c1></span>            <span class=p>}</span>
+        <span class=p>}</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+
+
+<span class=k>function</span> <span class=nf>task1</span><span class=p>()</span> <span class=p>{</span>
+    <span class=k>for</span> <span class=p>(</span><span class=nv>$i</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span> <span class=nv>$i</span> <span class=o>&lt;=</span> <span class=mi>10</span><span class=p>;</span> <span class=o>++</span><span class=nv>$i</span><span class=p>)</span> <span class=p>{</span>
+        <span class=k>echo</span> <span class=s2>&#34;This is task 1 iteration </span><span class=si>$i</span><span class=s2>.</span><span class=se>\n</span><span class=s2>&#34;</span><span class=p>;</span>
+        <span class=k>yield</span><span class=p>;</span> <span class=c1>// 主动让出CPU的执行权
+</span><span class=c1></span>    <span class=p>}</span>
+<span class=p>}</span>
+
+<span class=k>function</span> <span class=nf>task2</span><span class=p>()</span> <span class=p>{</span>
+    <span class=k>for</span> <span class=p>(</span><span class=nv>$i</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span> <span class=nv>$i</span> <span class=o>&lt;=</span> <span class=mi>5</span><span class=p>;</span> <span class=o>++</span><span class=nv>$i</span><span class=p>)</span> <span class=p>{</span>
+        <span class=k>echo</span> <span class=s2>&#34;This is task 2 iteration </span><span class=si>$i</span><span class=s2>.</span><span class=se>\n</span><span class=s2>&#34;</span><span class=p>;</span>
+        <span class=k>yield</span><span class=p>;</span> <span class=c1>// 主动让出CPU的执行权
+</span><span class=c1></span>    <span class=p>}</span>
+<span class=p>}</span>
+
+<span class=nv>$scheduler</span> <span class=o>=</span> <span class=k>new</span> <span class=nx>Scheduler</span><span class=p>;</span> <span class=c1>// 实例化一个调度器
+</span><span class=c1></span><span class=nv>$scheduler</span><span class=o>-&gt;</span><span class=na>addTask</span><span class=p>(</span><span class=nx>task1</span><span class=p>());</span> <span class=c1>// 添加不同的闭包函数作为任务
+</span><span class=c1></span><span class=nv>$scheduler</span><span class=o>-&gt;</span><span class=na>addTask</span><span class=p>(</span><span class=nx>task2</span><span class=p>());</span>
+<span class=nv>$scheduler</span><span class=o>-&gt;</span><span class=na>run</span><span class=p>();</span>
+
+
+<span class=c1>//要求将同步程序拆分成异步程序，即阻塞的过程本身还是存在，但是不等待这个阻塞二是让出执行权
+</span><span class=c1></span><span class=k>function</span> <span class=nf>task3</span><span class=p>()</span> <span class=p>{</span>
+    <span class=cm>/* 这里有一个远程任务，需要耗时10s，可能是一个远程机器抓取分析远程网址的任务，我们只要提交最后去远程机器拿结果就行了 */</span>
+    <span class=nx>remote_task_commit</span><span class=p>();</span>
+    <span class=c1>// 这时候请求发出后，我们不要在这里等，主动让出CPU的执行权给task2运行，他不依赖这个结果
+</span><span class=c1></span>    <span class=k>yield</span><span class=p>;</span>
+    <span class=k>yield</span> <span class=p>(</span><span class=nx>remote_task_receive</span><span class=p>());</span>
+<span class=p>}</span>   
+
+<span class=k>function</span> <span class=nf>task4</span><span class=p>()</span> <span class=p>{</span>
+    <span class=k>for</span> <span class=p>(</span><span class=nv>$i</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span> <span class=nv>$i</span> <span class=o>&lt;=</span> <span class=mi>5</span><span class=p>;</span> <span class=o>++</span><span class=nv>$i</span><span class=p>)</span> <span class=p>{</span>
+        <span class=k>echo</span> <span class=s2>&#34;This is task 2 iteration </span><span class=si>$i</span><span class=s2>.</span><span class=se>\n</span><span class=s2>&#34;</span><span class=p>;</span>
+        <span class=k>yield</span><span class=p>;</span> <span class=c1>// 主动让出CPU的执行权
+</span><span class=c1></span>    <span class=p>}</span>   
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div></div><div class=post-copyright><p class=copyright-item><span class=item-title>Author</span>
+<span class=item-content>zphilin</span></p><p class=copyright-item><span class=item-title>LastMod</span>
+<span class=item-content>2017-06-30</span></p></div><footer class=post-footer><div class=post-tags><a href=/tags/php/>PHP</a>
+<a href=/tags/%E5%8D%8F%E7%A8%8B/>协程</a></div><nav class=post-nav><a class=prev href=/post/php-array-reduce/><i class="iconfont icon-left"></i>
+<span class="prev-text nav-default">PHP：数组降维</span>
+<span class="prev-text nav-mobile">Prev</span></a>
+<a class=next href=/post/hadoop1/><span class="next-text nav-default">使用docker搭建hadoop集群</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:xworder@qq.com class="iconfont icon-email" title=email></a><a href=https://zphilin.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span>
+<span class=copyright-year>&copy;
+2017 -
+2021<span class=heart><i class="iconfont icon-heart"></i></span><span>zphilin</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script><script type=text/javascript src=/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js></script></body></html>
